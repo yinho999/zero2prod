@@ -10,6 +10,16 @@ async fn health_check() -> impl Responder {
     HttpResponse::Ok().finish()
 }
 
+#[derive(serde::Deserialize)]
+struct FormData {
+    email: String,
+    name: String,
+}
+
+async fn subscribe(_form: web::Form<FormData>) -> HttpResponse {
+    HttpResponse::Ok().finish()
+}
+
 // Notice the different signature!
 // We return `Server` on the happy path and we dropped the `async` keyword
 // We have no .await call, so it is not needed anymore.
@@ -18,6 +28,7 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
         App::new() // .route("/", web::get().to(greet))
             // .route("/{name}", web::get().to(greet))
             .route("/health_check", web::get().to(health_check))
+            .route("/subscribe", web::post().to(subscribe))
     })
     .listen(listener)?
     .run();
