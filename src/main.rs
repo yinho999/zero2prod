@@ -10,9 +10,9 @@ pub async fn main() -> std::io::Result<()> {
     // We have removed the hard-coded `8000` - it's now coming from our settings!
 
     let address = format!("127.0.0.1:{}", configuration.application_port);
-    let listener = TcpListener::bind(address).expect("Fail to bind address");
+    let listener = TcpListener::bind(&address).expect("Fail to bind address");
 
-    println!("Listening on address {}", address);
+    println!("Listening on address {}", &address);
 
     run(listener)?.await
 }
