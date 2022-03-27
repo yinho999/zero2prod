@@ -1,5 +1,9 @@
+use config::Config;
 use std::net::TcpListener;
-use zero2prod::startup;
+use zero2prod::{configuration, startup};
+
+use sqlx::{Connection, PgConnection};
+use zero2prod::configuration::get_configuration;
 // Launch our application in the background ~somehow~
 // No .await call, therefore no need for `spawn_app` to be async now.
 // We are also running tests, so it is not worth it to propagate errors:
@@ -43,6 +47,13 @@ async fn health_check() {
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
     let app_address = spawn_app();
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    let connection_string = configuration.database.connection_string();
+
+    let mut connection = PgConnection::connect(connection_string.as_str())
+        .await
+        .expect("Failed to connect to Postgres database.");
+
     let client = reqwest::Client::new();
 
     // Act
@@ -57,6 +68,14 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 
     // Assert
     assert_eq!(200, response.status().as_u16());
+
+    // Check Database
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions",)
+        .fetch_one(&mut connection)
+        .await
+        .expect("Failed to query database.");
+
+    assert_eq!(saved.email, "ursula_le_guin@gmail.com");
 }
 
 #[actix_web::test]
