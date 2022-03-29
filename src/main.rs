@@ -1,4 +1,5 @@
-use sqlx::{Connection, PgConnection};
+use sqlx::Pool;
+
 use std::net::TcpListener;
 use zero2prod::configuration::get_configuration;
 use zero2prod::startup::run;
@@ -8,7 +9,7 @@ pub async fn main() -> std::io::Result<()> {
     // Panic if we can't read configuaration
     let configuration = get_configuration().expect("Failed to read configuration.");
 
-    let connection = PgConnection::connect(configuration.database.connection_string().as_str())
+    let connection_pool = Pool::connect(&configuration.database.connection_string())
         .await
         .expect("Failed to connect to Postgres database.");
     // We have removed the hard-coded `8000` - it's now coming from our settings!
@@ -18,5 +19,5 @@ pub async fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind(&address).expect("Fail to bind address");
     println!("Listening on address {}", &address);
 
-    run(listener, connection)?.await
+    run(listener, connection_pool)?.await
 }
