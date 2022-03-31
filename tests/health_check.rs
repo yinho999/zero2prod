@@ -1,8 +1,9 @@
 use std::net::TcpListener;
+use uuid::Uuid;
 use zero2prod::startup;
 
-use sqlx::PgPool;
-use zero2prod::configuration::get_configuration;
+use sqlx::{Connection, Executor, PgConnection, PgPool};
+use zero2prod::configuration::{get_configuration, DatabaseSettings};
 // Launch our application in the background ~somehow~
 // No .await call, therefore no need for `spawn_app` to be async now.
 // We are also running tests, so it is not worth it to propagate errors:
@@ -14,6 +15,32 @@ struct TestApp {
     pub db_pool: PgPool,
 }
 
+pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+    // Connect to the Postgres server using connection
+    let mut connection = PgConnection::connect(&config.connection_string_without_db())
+        .await
+        .expect("Failed to connect to Postgres");
+
+    // Create new test database in server using connection
+    connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .await
+        .expect("Failed to create test database");
+
+    // Connect to database using PgPool
+    let connection_pool = PgPool::connect(&config.connection_string())
+        .await
+        .expect("Failed to connect to Postgres");
+
+    // Run migrations on test database to Initialise it
+    sqlx::migrate!("./migrations")
+        .run(&connection_pool)
+        .await
+        .expect("Failed to migrate database");
+
+    connection_pool
+}
+
 async fn spawn_app() -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Fail to bind address");
 
@@ -21,10 +48,11 @@ async fn spawn_app() -> TestApp {
     let address = format!("http://127.0.0.1:{}", port);
     println!("Listening on port {}", port);
 
-    let configuration = get_configuration().expect("Failed to read configuration.");
-    let connection_pool = PgPool::connect(&configuration.database.connection_string())
-        .await
-        .expect("Failed to connect to Postgres");
+    let mut configuration = get_configuration().expect("Failed to read configuration.");
+
+    configuration.database.database_name = Uuid::new_v4().to_string();
+
+    let connection_pool = configure_database(&configuration.database).await;
 
     let server = startup::run(listener, connection_pool.clone()).expect("Fail to bind address");
     // Launch the server as a background task

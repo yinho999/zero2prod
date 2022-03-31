@@ -1,4 +1,5 @@
 use crate::routes;
+use actix_web::middleware::Logger;
 use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::PgPool;
 use std::net::TcpListener;
@@ -11,7 +12,10 @@ pub fn run(listener: TcpListener, dp_pool: PgPool) -> Result<Server, std::io::Er
     let dp_pool = web::Data::new(dp_pool);
 
     let server = HttpServer::new(move || {
-        App::new() // .route("/", web::get().to(greet))
+        App::new()
+            // Middlewares are added using the `wrap` method on `App`
+            .wrap(Logger::default())
+            // .route("/", web::get().to(greet))
             // .route("/{name}", web::get().to(greet))
             .route("/health_check", web::get().to(routes::health_check))
             .route("/subscribe", web::post().to(routes::subscribe))
