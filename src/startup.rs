@@ -18,7 +18,7 @@ pub fn run(listener: TcpListener, dp_pool: PgPool) -> Result<Server, std::io::Er
             // .route("/", web::get().to(greet))
             // .route("/{name}", web::get().to(greet))
             .route("/health_check", web::get().to(routes::health_check))
-            .route("/subscribe", web::post().to(routes::subscribe))
+            .route("/subscriptions", web::post().to(routes::subscribe))
             // Register a PgConnection as part of our application state
             // Get a pointer copy and attach it to the application stat
             .app_data(dp_pool.clone())

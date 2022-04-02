@@ -16,7 +16,7 @@ struct TestApp {
 }
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
-    // Connect to the Postgres server using connection
+    // Connect to the Postgres server using preset database name
     let mut connection = PgConnection::connect(&config.connection_string_without_db())
         .await
         .expect("Failed to connect to Postgres");
