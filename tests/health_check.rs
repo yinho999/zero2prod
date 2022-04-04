@@ -1,3 +1,4 @@
+use secrecy::ExposeSecret;
 use std::net::TcpListener;
 use uuid::Uuid;
 use zero2prod::startup;
@@ -32,9 +33,10 @@ struct TestApp {
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Connect to the Postgres server using preset database name
-    let mut connection = PgConnection::connect(&config.connection_string_without_db())
-        .await
-        .expect("Failed to connect to Postgres");
+    let mut connection =
+        PgConnection::connect(&config.connection_string_without_db().expose_secret())
+            .await
+            .expect("Failed to connect to Postgres");
 
     // Create new test database in server using connection
     connection
@@ -43,7 +45,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to create test database");
 
     // Connect to database using PgPool
-    let connection_pool = PgPool::connect(&config.connection_string())
+    let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres");
 
