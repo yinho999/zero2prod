@@ -1,8 +1,8 @@
 use crate::routes;
-use actix_web::middleware::Logger;
 use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::PgPool;
 use std::net::TcpListener;
+use tracing_actix_web::TracingLogger;
 
 // Notice the different signature!
 // We return `Server` on the happy path and we dropped the `async` keyword
@@ -14,7 +14,7 @@ pub fn run(listener: TcpListener, dp_pool: PgPool) -> Result<Server, std::io::Er
     let server = HttpServer::new(move || {
         App::new()
             // Middlewares are added using the `wrap` method on `App`
-            .wrap(Logger::default())
+            .wrap(TracingLogger::default())
             // .route("/", web::get().to(greet))
             // .route("/{name}", web::get().to(greet))
             .route("/health_check", web::get().to(routes::health_check))

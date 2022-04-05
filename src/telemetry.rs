@@ -40,9 +40,9 @@ where
     // The `with` method is provided by `SubscriberExt`, an extension
     // trait for `Subscriber` exposed by `tracing_subscriber
     Registry::default()
-        .with(formating_layer)
-        .with(JsonStorageLayer)
         .with(env_filter)
+        .with(JsonStorageLayer)
+        .with(formating_layer)
 }
 
 pub fn init_subscriber(subscriber: impl Subscriber + Send + Sync) {
