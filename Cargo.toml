@@ -46,5 +46,7 @@ features = [
 "macros",
 "postgres",
 "uuid",
-"migrate"
+"migrate",
+"offline"
 ]
+
